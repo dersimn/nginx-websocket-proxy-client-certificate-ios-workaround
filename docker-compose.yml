@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - SSL_HOSTNAME=home.simon-christmann.de
+      - HTTP_AUTH=user:password
+      - MQTT_WS_URL=http://10.1.1.50:9001
+      - DISABLE_LAN_SECURITY=10.1.1.0/24
+    volumes:
+      - ./www:/www:ro
+      - generated_ssl_certs:/ssl
+
+volumes:
+  generated_ssl_certs:

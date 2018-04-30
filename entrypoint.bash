@@ -29,7 +29,7 @@ fi
 
 # HTTP auth
 if [ -n "${HTTP_AUTH}" ]; then
-	echo ${HTTP_AUTH} > /htpasswd
+	htpasswd -bc /htpasswd ${HTTP_AUTH}
 	cat /conf/40-auth.conf >> /etc/nginx/conf.d/default.conf
 fi
 

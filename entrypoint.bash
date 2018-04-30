@@ -23,6 +23,9 @@ fi
 if [ -f /ssl/nginx.key ] && [ -f /ssl/nginx.crt ]; then
 	cat /conf/30-ssl.conf >> /etc/nginx/conf.d/default.conf
 fi
+if [ -f /ssl/client.crt ]; then
+	cat /conf/31-ssl-client.conf >> /etc/nginx/conf.d/default.conf
+fi
 
 # HTTP auth
 if [ -n "${HTTP_AUTH}" ]; then

@@ -8,7 +8,7 @@ Enable the following options via ENV varables, either by `docker run ... -e "SOM
 * `HTTP_AUTH=user password`: Basic HTTP authentification. Passwords are transmitted in plaintext via HTTP. Better don't use one of your default passwords here. Alternatively: enable HTTPS.
 * `SSL_HOSTNAME=example.com`: Enable HTTPS by generating self-signed certificates, which will be placed in `/ssl`.
 * If you provide certificate files (`/ssl/nginx.crt`, `/ssl/nginx.key`) for e.g. via: `docker run ... -v $(pwd)/ssl:/ssl:ro ...`, SSL will automatically be enabled.
-* If you provide a client-side certificate (`/ssl/client.crt`), client authentification will be enabled.
+* If you provide a client-side certificate (`/ssl/client.crt`), client authentification will be enabled. This however won't currently work with websocket relays from iOS, see [this](http://blog.christophermullins.com/2017/04/30/securing-homeassistant-with-client-certificates/), [this](https://github.com/home-assistant/home-assistant-iOS/issues/27), [this](https://www.bountysource.com/issues/35354552-websocket-does-not-send-client-certificate).
 * `DISABLE_LAN_SECURITY=10.1.1.0/24`: Disable HTTPS and HTTP Auth for the given IP range. For e.g. if these features should only be enabled for clients conencting from the Internet. When running on Docker for Mac, this feature doen't work, see [issue #180](https://github.com/docker/for-mac/issues/180).
 
 ### Example

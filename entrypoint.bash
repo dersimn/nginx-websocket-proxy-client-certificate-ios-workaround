@@ -34,9 +34,19 @@ if [ -n "${HTTP_AUTH}" ]; then
 fi
 
 # Location directives
+# /
 cat /conf/80-location.conf >> /etc/nginx/conf.d/default.conf
+if [ -f /ssl/client.crt ]; then
+	echo "access_by_lua_file /conf/90-wsrelay-access.lua;" >> /etc/nginx/conf.d/default.conf
+fi
+echo "}" >> /etc/nginx/conf.d/default.conf
+# /mqtt
 if [ -n "${MQTT_WS_URL}" ]; then
 	envsubst '${MQTT_WS_URL}' < /conf/90-wsrelay.conf >> /etc/nginx/conf.d/default.conf
+	if [ -f /ssl/client.crt ]; then
+		echo "access_by_lua_file /conf/90-wsrelay-access.lua;" >> /etc/nginx/conf.d/default.conf
+	fi
+	echo "}" >> /etc/nginx/conf.d/default.conf
 fi
 
 # Server close

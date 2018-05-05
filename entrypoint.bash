@@ -48,6 +48,10 @@ if [ -n "${MQTT_WS_URL}" ]; then
 	fi
 	echo "}" >> /etc/nginx/conf.d/default.conf
 fi
+# = / (exactly root)
+if [ -f /ssl/client.crt ]; then
+	cat /conf/81-location-root-workaround.conf >> /etc/nginx/conf.d/default.conf
+fi
 
 # Server close
 echo "}" >> /etc/nginx/conf.d/default.conf

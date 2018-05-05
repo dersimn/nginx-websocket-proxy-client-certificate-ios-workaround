@@ -8,8 +8,8 @@ echo "# Generated config" > ${CONFIG_PATH}
 
 # Geo locations
 cat /conf/10-geo.conf >> ${CONFIG_PATH}
-if [ -n "${DISABLE_LAN_SECURITY}" ]; then
-	echo "${DISABLE_LAN_SECURITY} 0;" >> ${CONFIG_PATH}
+if [ -n "${LOCAL_NETWORK}" ]; then
+	echo "${LOCAL_NETWORK} 0;" >> ${CONFIG_PATH}
 fi
 echo "}" >> ${CONFIG_PATH}
 
@@ -39,14 +39,14 @@ fi
 # /
 cat /conf/80-location.conf >> ${CONFIG_PATH}
 if [ -f /ssl/client.crt ]; then
-	echo "access_by_lua_file /conf/90-wsrelay-access.lua;" >> ${CONFIG_PATH}
+	echo "if (\$not_local) { access_by_lua_file /conf/90-wsrelay-access.lua; }" >> ${CONFIG_PATH}
 fi
 echo "}" >> ${CONFIG_PATH}
 # /mqtt
 if [ -n "${MQTT_WS_URL}" ]; then
 	envsubst '${MQTT_WS_URL}' < /conf/90-wsrelay.conf >> ${CONFIG_PATH}
 	if [ -f /ssl/client.crt ]; then
-		echo "access_by_lua_file /conf/90-wsrelay-access.lua;" >> ${CONFIG_PATH}
+		echo "if (\$not_local) { access_by_lua_file /conf/90-wsrelay-access.lua; }" >> ${CONFIG_PATH}
 	fi
 	echo "}" >> ${CONFIG_PATH}
 fi

@@ -1,10 +1,11 @@
-FROM nginx
+FROM ubuntu:18.04
 
 RUN apt-get update && apt-get install -y \
 	openssl \
 	nginx-extras lua5.1 liblua5.1-dev \
 	apache2-utils \
 	git diffutils autoconf libssl1.0-dev make \
+	gettext-base \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/dersimn/luacrypto /opt/luacrypto \

@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 as builder
+FROM arm32v7/ubuntu:18.04 as builder
 
 RUN apt-get update && apt-get install -y \
         build-essential \
@@ -17,7 +17,7 @@ RUN git clone https://github.com/dersimn/luacrypto /opt/luacrypto \
 RUN curl -sSL -o /mo https://git.io/get-mo && chmod a+x /mo
 
 
-FROM ubuntu:18.04
+FROM arm32v7/ubuntu:18.04
 
 RUN apt-get update && apt-get install -y \
         nginx-extras \

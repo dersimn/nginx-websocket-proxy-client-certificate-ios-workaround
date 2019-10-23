@@ -1,51 +1,37 @@
-Nginx Docker image, with configurable config templates that might be useful for [mqtt-smarthome](https://github.com/mqtt-smarthome).
+Docker Image with nginx and configurable proxy-pass for Mosquitto MQTT Websocket connections. 
 
 ## Options
 
-Enable the following options via ENV varables, either by `docker run ... -e "SOME_ENV=somevalue" ...` or in yaml format via docker-compose:
+This image can proxy-pass the Websocket connection from your MQTT broker, by setting the env variable `MQTT_HOST`.  
+You have to enable Websockets on your broker. The Docker Image [toke/mosquitto](https://hub.docker.com/r/toke/mosquitto) for e.g. has it already enabled by default on [port 9001](https://github.com/toke/docker-mosquitto/blob/8aa0a74b444fb2377fcd4a43ac85a257aef51176/config/conf.d/websockets.conf#L1), where the official Docker Image [eclipse-mosquitto](https://hub.docker.com/_/eclipse-mosquitto) need to be configured first.
 
-* `MQTT_WS_URL=http://mosquitto:9001`: Proxy websocket from given url to http://example.com/mqtt. Useful when your clients and the MQTT broker are not in the same network (e.g. Internet).
-* `HTTP_AUTH=user password`: Basic HTTP authentification. Passwords are transmitted in plaintext via HTTP. Better don't use one of your default passwords here. Alternatively: enable HTTPS.
-* `SSL_HOSTNAME=example.com`: Enable HTTPS by generating self-signed certificates, which will be placed in `/ssl`.
-* If you provide certificate files (`/ssl/nginx.crt`, `/ssl/nginx.key`) for e.g. via: `docker run ... -v $(pwd)/ssl:/ssl:ro ...`, SSL will automatically be enabled.
-* If you provide a client-side certificate (`/ssl/client.crt`), client authentification will be enabled. This however won't currently work with websocket relays from iOS, see [this](http://blog.christophermullins.com/2017/04/30/securing-homeassistant-with-client-certificates/), [this](https://github.com/home-assistant/home-assistant-iOS/issues/27), [this](https://www.bountysource.com/issues/35354552-websocket-does-not-send-client-certificate).
-* `DISABLE_LAN_SECURITY=10.1.1.0/24`: Disable HTTPS and HTTP Auth for the given IP range. For e.g. if these features should only be enabled for clients conencting from the Internet. When running on Docker for Mac, this feature doen't work, see [issue #180](https://github.com/docker/for-mac/issues/180).
+    docker run -d --restart=always \
+        -v $(pwd)/www:/www:ro \
+        -e "MQTT_HOST=10.1.1.50:9001" \
+        -p 80:80 \
+        dersimn/mqtt-nginx-proxy
 
-### Example
+If you provide an SSL key/cert pair in `/ssl`, the Docker Image will also enable HTTPS:
 
-docker-compose:
+* `/ssl/nginx.key`
+* `/ssl/nginx.crt`
 
-	version: '3'
+Additionally you can enable client-authentification via SSL certificates, by providing:
 
-	services:
-	  web:
-	    image: dersimn/mqtt-smarthome-nginx
-	    restart: always
-	    ports:
-	      - "80:80"
-	      - "443:443"
-	    environment:
-	      - SSL_HOSTNAME=home.simon-christmann.de
-	      - HTTP_AUTH=user:password
-	      - MQTT_WS_URL=http://10.1.1.50:9001
-	      - DISABLE_LAN_SECURITY=10.1.1.0/24
-	    volumes:
-	      - ./www:/www:ro
-	      - generated_ssl_certs:/ssl
+* `/ssl/client.crt`
 
-	volumes:
-	  generated_ssl_certs:
+In case you have revoked clients, also prodive a `/ssl/client.crl` file.
 
-## Development
+A nice tutorial on how to generate your own certificates, is located [here](https://jamielinux.com/docs/openssl-certificate-authority/introduction.html).
 
-While actively developing the HTML scripts you can start a Docker Container with the following command:
+    docker run -d --restart=always \
+        -v $(pwd)/www:/www:ro \
+        -v $(pwd)/ssl:/ssl:ro \
+        -e "MQTT_HOST=10.1.1.50:9001" \
+        -p 80:80 \
+        -p 443:443 \
+        dersimn/mqtt-nginx-proxy
 
-	docker run -d --rm -v $(pwd)/www:/www:ro -p 8080:80 dersimn/mqtt-smarthome-nginx
+If you want to change the default ports, specify it like this: `-p 8001:80 -p 8443:443 -e "HTTPS_REDIRECT_PORT=8443"`.
 
-### Build
-
-For deploying a Docker Image, use this as your Dockerfile:
-
-	FROM dersimn/mqtt-smarthome-nginx
-
-	COPY www /www
+HTTPS and client-auth are optional for clients connecting via a local IP, according to [these](https://github.com/dersimn/mqtt-smarthome-webui/blob/6e419811d3bd433e5fc594e1beccaa0499fe08cf/nginx.template#L69) IP ranges. If you make port 80/443 public to the Internet you should definitely enable client-auth.

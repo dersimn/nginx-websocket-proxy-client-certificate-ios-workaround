@@ -1,5 +1,5 @@
 Docker Image with nginx and configurable websocket proxy with SSL client certifcate authorization.  
-This image includes a workaround for iOS Safari, as there is still an open bug that causes the SSL client certificate not being used for websocket connections, see [[1]](http://blog.christophermullins.com/2017/04/30/securing-homeassistant-with-client-certificates) [[2]](https://github.com/home-assistant/home-assistant-iOS/issues/27) [[3]](https://www.bountysource.com/issues/35354552-websocket-does-not-send-client-certificate).
+This image includes a workaround for iOS Safari, as there is still an open bug that causes the SSL client certificate not being used for websocket connections, see [[1][1]] [[2][2]] [[3][3]].
 
 I started to build this image to proxy Mosquitto MQTT websockets, but it will work with every websocket connection. 
 
@@ -41,9 +41,13 @@ HTTPS and client-auth are optional for clients connecting from a local IP, accor
 
 ## iOS Client Certificate Workaround
 
-The workaround is based on a [Keyed-Hash Message Authentication Code (HMAC)](https://en.wikipedia.org/wiki/HMAC) and was initially described by [Chris Mullins](https://github.com/sidoh) for Securing HomeAssistant with client certificates (works with Safari/iOS) [[1]](https://blog.christophermullins.com/2017/04/30/securing-homeassistant-with-client-certificates). 
+The workaround is based on a [Keyed-Hash Message Authentication Code (HMAC)](https://en.wikipedia.org/wiki/HMAC) and was initially described by [Chris Mullins](https://github.com/sidoh) for [Securing HomeAssistant with client certificates (works with Safari/iOS)][1]. 
 
-By connecting to `/` a cookie will be generated that is used to authenticate the websocket connection later, as there is an open bug that iOS Safari is not using the client certificate for authenticating websocket conenctions [[3]](https://www.bountysource.com/issues/35354552-websocket-does-not-send-client-certificate). It is also possible to use a dedicated cookie location to generate the previously mentioned cookie, by setting `-e DEDICATED_COOKIE_LOCATION="/cookie"`. However this requires your application to fetch the cookie prior to connecting to the websocket location, see an example [here](https://github.com/dersimn/mqtt-smarthome-webui/blob/9d74c4d5370c2e2249f8941abe35e0323d6bc4c8/www/webui.js#L60). 
+By connecting to `/` a cookie will be generated that is used to authenticate the websocket connection later, as there is an open bug that iOS Safari is not using the client certificate for authenticating websocket conenctions [[3][3]]. It is also possible to use a dedicated cookie location to generate the previously mentioned cookie, by setting `-e DEDICATED_COOKIE_LOCATION="/cookie"`. However this requires your application to fetch the cookie prior to connecting to the websocket location, see an example [here](https://github.com/dersimn/mqtt-smarthome-webui/blob/9d74c4d5370c2e2249f8941abe35e0323d6bc4c8/www/webui.js#L60). 
 
-The HMAC secret can be customized by `-e HMAC_SECRET="some secret"`.
+The HMAC secret can be customized by `-e HMAC_SECRET="some_secret"`.
 
+
+[1]: http://blog.christophermullins.com/2017/04/30/securing-homeassistant-with-client-certificates
+[2]: https://github.com/home-assistant/home-assistant-iOS/issues/27
+[3]: https://www.bountysource.com/issues/35354552-websocket-does-not-send-client-certificate

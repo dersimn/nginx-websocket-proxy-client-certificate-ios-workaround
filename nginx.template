@@ -144,8 +144,8 @@ http {
             {{/SSL_CLIENT_AUTH}}
         }
 
-        location /cookie {
-            {{#SSL_CLIENT_AUTH}}
+        {{#WS_PROXY}}{{#SSL_CLIENT_AUTH}}
+            location {{WS_PROXY_PATH}}-get-auth-cookie {
                 if ($access_allowed = no) {
                     return 403;
                 }
@@ -175,8 +175,8 @@ http {
                         ngx.exit(ngx.HTTP_NO_CONTENT)
                     }
                 }
-            {{/SSL_CLIENT_AUTH}}
-        }
+            }
+        {{/SSL_CLIENT_AUTH}}{{/WS_PROXY}}
 
         {{#WS_PROXY}}
             location {{WS_PROXY_PATH}} {

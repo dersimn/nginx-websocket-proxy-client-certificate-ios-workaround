@@ -16,6 +16,7 @@ RUN git clone https://github.com/dersimn/luacrypto /opt/luacrypto \
 
 RUN curl -sSL -o /mo https://git.io/get-mo && chmod a+x /mo
 
+# ------------------------------------------------------------------------------
 
 FROM ubuntu:18.04
 

@@ -40,8 +40,26 @@ http {
     # Logging Settings
     ##
 
+    log_format logfmt   'request_uri="$request_uri" '
+                        'request_method="$request_method" '
+                        'status="$status" '
+                        'remote_addr="$remote_addr" '
+                        'http_referer="$http_referer" '
+                        'http_user_agent="$http_user_agent" '
+                        'server_protocol="$server_protocol" '
+                        'ssl_client_verify="$ssl_client_verify" '
+                        'request_length="$request_length" '
+                        'bytes_sent="$bytes_sent" '
+                        'cookie_AccessToken="$cookie_AccessToken" '
+                        'cookie_ClientId="$cookie_ClientId" '
+                        'cookie_AccessExpires="$cookie_AccessExpires" ';
+
     access_log /dev/stdout;
     error_log /dev/stderr info;
+
+    {{#ACCESS_LOG_FILE}}
+        access_log /nginx.log logfmt;
+    {{/ACCESS_LOG_FILE}}
 
     ##
     # Gzip Settings
@@ -54,7 +72,7 @@ http {
     # gzip_comp_level 6;
     # gzip_buffers 16 8k;
     # gzip_http_version 1.1;
-    # gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
     ##
     # Virtual Host Configs
@@ -67,9 +85,11 @@ http {
 
     geo $internal_ip {
         default         no;
-        10.0.0.0/8      yes;
-        #172.16.0.0/12  yes;
-        192.168.0.0/16  yes;
+        {{#WHITELIST_LOCAL_IP}}
+            10.0.0.0/8      yes;
+            172.16.0.0/12   yes;
+            192.168.0.0/16  yes;
+        {{/WHITELIST_LOCAL_IP}}
     }
 
     map $internal_ip$ssl_client_verify $access_allowed {
@@ -110,20 +130,21 @@ http {
                     ssl_crl             /ssl/client.crl;
                 {{/SSL_CLIENT_AUTH_CRL}}
                 ssl_verify_client       optional;
-
-                # Workaround for workaround
-                # Setting cookies with Lua messes up the MIME type, causing html page to download instead of being openend in browser
-                # see: https://github.com/openresty/openresty/issues/52
-                location = / {
-                    rewrite ^ /index.htm last;
-                }
             {{/SSL_CLIENT_AUTH}}
         {{/ENABLE_HTTPS}}
 
         location / {
             root   /www;
-            index  index.htm index.html;
+            index  index.html index.htm;
 
+            {{#SSL_CLIENT_AUTH}}
+                if ($access_allowed = no) {
+                    return 403;
+                }
+            {{/SSL_CLIENT_AUTH}}
+        }
+
+        location /cookie {
             {{#SSL_CLIENT_AUTH}}
                 if ($access_allowed = no) {
                     return 403;
@@ -141,23 +162,25 @@ http {
                         local crypto = require "crypto"
 
                         if ngx.var.ssl_client_verify == "SUCCESS" then
-                          client = crypto.digest("sha256", ngx.var.ssl_client_cert)
-                          expires = ngx.time() + 3600
+                            client = crypto.digest("sha256", ngx.var.ssl_client_cert)
+                            expires = ngx.time() + 3600
 
-                          ngx.header["Set-Cookie"] = {
-                            string.format("AccessToken=%s; path=/", crypto.hmac.digest("sha256", string.format("%s%d", client, expires), HMAC_SECRET)),
-                            string.format("ClientId=%s; path=/", client),
-                            string.format("AccessExpires=%d; path=/", expires)
-                          }
+                            ngx.header["Set-Cookie"] = {
+                                string.format("AccessToken=%s; path=/", crypto.hmac.digest("sha256", string.format("%s%d", client, expires), HMAC_SECRET)),
+                                string.format("ClientId=%s; path=/", client),
+                                string.format("AccessExpires=%d; path=/", expires)
+                            }
                         end
+
+                        ngx.exit(ngx.HTTP_NO_CONTENT)
                     }
                 }
             {{/SSL_CLIENT_AUTH}}
         }
 
-        {{#MQTT_HOST}}
-            location /mqtt {
-                proxy_pass          http://{{MQTT_HOST}};
+        {{#WS_PROXY}}
+            location {{WS_PROXY_PATH}} {
+                proxy_pass          http://{{WS_PROXY}};
                 proxy_http_version  1.1;
                 proxy_set_header    Upgrade        $http_upgrade;
                 proxy_set_header    Connection     $connection_upgrade;
@@ -170,17 +193,17 @@ http {
                             local crypto = require "crypto"
 
                             if ngx.var.ssl_client_verify == "NONE" then
-                              client = ngx.var.cookie_ClientId
-                              client_hmac = ngx.var.cookie_AccessToken
-                              access_expires = ngx.var.cookie_AccessExpires
+                                client = ngx.var.cookie_ClientId
+                                client_hmac = ngx.var.cookie_AccessToken
+                                access_expires = ngx.var.cookie_AccessExpires
 
-                              if client ~= nil and client_hmac ~= nil and access_expires ~= nil then
-                                hmac = crypto.hmac.digest("sha256", string.format("%s%d", client, access_expires), HMAC_SECRET)
+                                if client ~= nil and client_hmac ~= nil and access_expires ~= nil then
+                                    hmac = crypto.hmac.digest("sha256", string.format("%s%d", client, access_expires), HMAC_SECRET)
 
-                                if hmac ~= "" and hmac == client_hmac and tonumber(access_expires) > ngx.time() then
-                                  return
+                                    if hmac ~= "" and hmac == client_hmac and tonumber(access_expires) > ngx.time() then
+                                        return
+                                    end
                                 end
-                              end
                             end
 
                             ngx.exit(ngx.HTTP_FORBIDDEN)
@@ -188,6 +211,6 @@ http {
                     }
                 {{/SSL_CLIENT_AUTH}}
             }
-        {{/MQTT_HOST}}
+        {{/WS_PROXY}}
     }
 }

@@ -28,10 +28,13 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /opt/luacrypto/src/.libs/crypto.so /usr/local/lib/lua/5.1/crypto.so
 COPY --from=builder /mo /usr/local/bin/mo
 
+RUN mkdir /www
 COPY nginx.template /nginx.template
 COPY run.bash /run.bash
 
 EXPOSE 80
 EXPOSE 443
+
+ENV WHITELIST_LOCAL_IP true
 
 CMD ["bash", "/run.bash"]

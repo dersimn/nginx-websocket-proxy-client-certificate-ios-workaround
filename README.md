@@ -39,6 +39,7 @@ If you want to change the default ports, specify it like this: `-p 8001:80 -p 84
 
 HTTPS and client-auth are optional for clients connecting from a local IP, according to [these](https://github.com/dersimn/nginx-websocket-proxy-client-certificate-ios-workaround/blob/3d8123b9830f49b9c1b3ef9176ef6c8fe22353dd/nginx.template#L90) IP ranges. If you don't want this behaviour, set `-e WHITELIST_LOCAL_IP=false` to force SSL and client-auth for everyone. You can also add own IP ranges to the whitelist with `-e WHITELIST_IP="10.1.1.0/24 192.168.1.0/24"`.
 
+
 ## iOS Client Certificate Workaround
 
 The workaround is based on a [Keyed-Hash Message Authentication Code (HMAC)](https://en.wikipedia.org/wiki/HMAC) and was initially described by [Chris Mullins](https://github.com/sidoh) for [Securing HomeAssistant with client certificates (works with Safari/iOS)][1]. 
@@ -46,6 +47,25 @@ The workaround is based on a [Keyed-Hash Message Authentication Code (HMAC)](htt
 By connecting to `/` a cookie will be generated that is used to authenticate the websocket connection later, as there is an open bug that iOS Safari is not using the client certificate for authenticating websocket conenctions [[3][3]]. It is also possible to use a dedicated cookie location to generate the previously mentioned cookie, by setting `-e DEDICATED_COOKIE_LOCATION="/cookie"`. However this requires your application to fetch the cookie prior to connecting to the websocket location, see an example [here](https://github.com/dersimn/mqtt-smarthome-webui/blob/9d74c4d5370c2e2249f8941abe35e0323d6bc4c8/www/webui.js#L60). 
 
 The HMAC secret can be customized by `-e HMAC_SECRET="some_secret"`.
+
+
+## Build
+
+### Simple
+
+    docker build -t ngx .
+
+### Docker Hub
+
+    docker buildx create --name mybuilder
+    docker buildx use mybuilder
+    docker buildx build \
+        --platform linux/386,linux/amd64,linux/arm/v7 \
+        -t dersimn/nginx-websocket-proxy-client-certificate-ios-workaround \
+        -t dersimn/nginx-websocket-proxy-client-certificate-ios-workaround:1 \
+        -t dersimn/nginx-websocket-proxy-client-certificate-ios-workaround:1.x \
+        -t dersimn/nginx-websocket-proxy-client-certificate-ios-workaround:1.x.0 \
+        --push .
 
 
 [1]: http://blog.christophermullins.com/2017/04/30/securing-homeassistant-with-client-certificates

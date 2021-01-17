@@ -24,6 +24,9 @@ fi
 if [[ -z "${WS_PROXY_PATH}" ]]; then
     export WS_PROXY_PATH="/ws"
 fi
+if [[ -z "${HMAC_SECRET}" ]]; then
+    export HMAC_SECRET="hunter2"
+fi
 
 # Build Config
 export MO_FALSE_IS_EMPTY=true

@@ -158,7 +158,7 @@ http {
                 #   https://www.bountysource.com/issues/35354552-websocket-does-not-send-client-certificate
                 if ($access_allowed = yes) {
                     access_by_lua_block {
-                        local HMAC_SECRET = "hunter2"
+                        local HMAC_SECRET = "{{HMAC_SECRET}}"
                         local crypto = require "crypto"
 
                         if ngx.var.ssl_client_verify == "SUCCESS" then
@@ -189,7 +189,7 @@ http {
                     # Workaround for iOS devices - Part 2
                     if ($access_allowed = no) {
                         access_by_lua_block {
-                            local HMAC_SECRET = "hunter2"
+                            local HMAC_SECRET = "{{HMAC_SECRET}}"
                             local crypto = require "crypto"
 
                             if ngx.var.ssl_client_verify == "NONE" then

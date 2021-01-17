@@ -141,11 +141,39 @@ http {
                 if ($access_allowed = no) {
                     return 403;
                 }
+
+                {{^DEDICATED_COOKIE_LOCATION}}{{#WS_PROXY}}
+                    # Workaround for iOS devices - Part 1
+                    # Websockets are not authenticated via Client-Certs in iOS
+                    # see:
+                    #   http://blog.christophermullins.com/2017/04/30/securing-homeassistant-with-client-certificates
+                    #   https://github.com/home-assistant/home-assistant-iOS/issues/27
+                    #   https://www.bountysource.com/issues/35354552-websocket-does-not-send-client-certificate
+                    if ($access_allowed = yes) {
+                        access_by_lua_block {
+                            local HMAC_SECRET = "{{HMAC_SECRET}}"
+                            local crypto = require "crypto"
+
+                            if ngx.var.ssl_client_verify == "SUCCESS" then
+                                client = crypto.digest("sha256", ngx.var.ssl_client_cert)
+                                expires = ngx.time() + 3600
+
+                                ngx.header["Set-Cookie"] = {
+                                    string.format("AccessToken=%s; path=/", crypto.hmac.digest("sha256", string.format("%s%d", client, expires), HMAC_SECRET)),
+                                    string.format("ClientId=%s; path=/", client),
+                                    string.format("AccessExpires=%d; path=/", expires)
+                                }
+                            end
+
+                            ngx.exit(ngx.HTTP_NO_CONTENT)
+                        }
+                    }
+                {{/WS_PROXY}}{{/DEDICATED_COOKIE_LOCATION}}
             {{/SSL_CLIENT_AUTH}}
         }
 
-        {{#WS_PROXY}}{{#SSL_CLIENT_AUTH}}
-            location {{WS_PROXY_PATH}}-get-auth-cookie {
+        {{#WS_PROXY}}{{#SSL_CLIENT_AUTH}}{{#DEDICATED_COOKIE_LOCATION}}
+            location {{DEDICATED_COOKIE_LOCATION}} {
                 if ($access_allowed = no) {
                     return 403;
                 }
@@ -176,7 +204,7 @@ http {
                     }
                 }
             }
-        {{/SSL_CLIENT_AUTH}}{{/WS_PROXY}}
+        {{/DEDICATED_COOKIE_LOCATION}}{{/SSL_CLIENT_AUTH}}{{/WS_PROXY}}
 
         {{#WS_PROXY}}
             location {{WS_PROXY_PATH}} {

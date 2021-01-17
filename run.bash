@@ -28,8 +28,12 @@ if [[ -z "${HMAC_SECRET}" ]]; then
     export HMAC_SECRET="hunter2"
 fi
 
+IFS=', ' read -r -a WHITELIST_IP_ARRAY <<< "$WHITELIST_IP"
+export WHITELIST_IP_ARRAY
+
 # Build Config
 export MO_FALSE_IS_EMPTY=true
+. /usr/local/bin/mo # source the mo function in order to use arrays
 cat /nginx.template | mo > ${CONFIG_PATH}
 
 # Run

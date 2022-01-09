@@ -3,8 +3,27 @@ This image includes a workaround for iOS Safari, as there is still an open bug t
 
 I started to build this image to proxy Mosquitto MQTT websockets, but it will work with every websocket connection. 
 
+# Usage
 
-## Options
+## As baseimage for your own project
+
+Use this Image as baseimage for your own projects that need SSL Client Certificates on iOS devices:
+
+```Dockerfile
+FROM dersimn/nginx-websocket-proxy-client-certificate-ios-workaround:3
+
+COPY www /www
+
+ENV WS_PROXY_PATH="/my-websocket-location"
+ENV DEDICATED_COOKIE_LOCATION="/my-cookie-location"
+ENV HMAC_SECRET="some-secret"
+ENV WHITELIST_LOCAL_IP="false"
+ENV WHITELIST_IP="10.1.1.0/24 192.168.1.0/24"
+```
+
+See next section for more options.
+
+## Directly
 
 This image can proxy-pass the Websocket connections, by setting the env variable `WS_PROXY`. The target path for the proxy can be configured with `WS_PROXY_PATH`, it defaults to `/ws`.
 
@@ -49,13 +68,13 @@ By connecting to `/` a cookie will be generated that is used to authenticate the
 The HMAC secret can be customized by `-e HMAC_SECRET="some_secret"`.
 
 
-## Build
+# Build
 
-### Simple
+## Simple
 
     docker build -t ngx .
 
-### Docker Hub
+## Docker Hub
 
     docker buildx create --name mybuilder
     docker buildx use mybuilder

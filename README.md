@@ -1,3 +1,8 @@
+> [!NOTE]
+> With iOS ≥15 the client certificate bug has been fixed. As of iOS 15, Safari authenticates WebSocket connections with client certificates by itself. The workaround from this repository is therefore no longer needed.  
+Since this workaround only works on Ubuntu 18.04, which will reach end-of-life in mid-2023, this repository will no longer be updated. If you need a NGINX WebSocket proxy with client certificate authentication (without iOS workaround), see the fork of this repository: [dersimn/nginx-websocket-proxy-client-certificate](https://github.com/dersimn/nginx-websocket-proxy-client-certificate).
+
+
 Docker Image with nginx and configurable websocket proxy with SSL client certifcate authorization.  
 This image includes a workaround for iOS Safari, as there is still an open bug that causes the SSL client certificate not being used for websocket connections, see [[1][1]] [[2][2]] [[3][3]].
 
